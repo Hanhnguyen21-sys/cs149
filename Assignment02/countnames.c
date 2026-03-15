@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "structs.h"
 #define MAX_NAMES 100
 #define MAX_NAME_LEN 31 // 30 chars + '\0'
 #define BUF_SIZE 256
@@ -25,19 +26,37 @@ static int find_name_index(char names[MAX_NAMES][MAX_NAME_LEN], int size, const 
     }
     return -1;
 }
+/**
+ * This function writes the name count data to the specified file descriptor
+ * in a structured format.
+ * Input parameters:
+ *     - fd: the file descriptor to write to
+ *     - data: a pointer to the NameCountData structure
+ *       containing the name and count information
+ *
+ */
+void write_struct_namecount(int fd, NameCountData *data)
+{
+    MessageHeader header;
+    header.type = TYPE_NAMECOUNT;
+    header.size = sizeof(NameCountData);
+
+    write(fd, &header, sizeof(header));     // Write the header
+    write(fd, data, sizeof(NameCountData)); // Write the payload (name counts)
+}
 
 int main(int argc, char *argv[])
 {
     FILE *fptr = NULL;
-
     // load file
     if (argc == 2)
     {
         fptr = fopen(argv[1], "r");
         if (fptr == NULL)
         {
+            // exit with code status 1 if can not open file
             fprintf(stderr, "error: cannot open file %s\n", argv[1]);
-            return 1; /* exit with status code 1 */
+            return 1;
         }
     }
     else if (argc == 1)
@@ -46,7 +65,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        return 0; /* spec: if no file or other parameters -> exit 0 */
+        return 0; // no file or other parameters -> exit 0
     }
 
     char names[MAX_NAMES][MAX_NAME_LEN];
@@ -59,11 +78,10 @@ int main(int argc, char *argv[])
     char buf[BUF_SIZE];
     int line_count = 0;
 
-    // read file
+    // read from file
     while (fgets(buf, sizeof(buf), fptr) != NULL)
     {
         line_count++;
-
         // Since each name is seperated by newline, we need to remove
         // the newline character at the end of the name.
         size_t len = strlen(buf);
@@ -79,7 +97,7 @@ int main(int argc, char *argv[])
             end--;
         }
 
-        // skip leading whitespace
+        // skip leading whitespaces
         char *p = buf;
         while (*p == ' ' || *p == '\t' || *p == '\r')
             p++;
@@ -93,7 +111,7 @@ int main(int argc, char *argv[])
         }
 
         char name[MAX_NAME_LEN] = {0};
-        strncpy(name, buf, MAX_NAME_LEN - 1);
+        strncpy(name, p, MAX_NAME_LEN - 1);
         name[MAX_NAME_LEN - 1] = '\0';
 
         int index = find_name_index(names, size, name);
@@ -117,14 +135,22 @@ int main(int argc, char *argv[])
     }
     if (size == 0)
     {
-        return 0; /*empty file -> exit 0 */
+        return 0; // empty file -> exit with status code 0
     }
     if (fptr != NULL && fptr != stdin)
     {
         fclose(fptr);
     }
 
+    // for (int i = 0; i < size; i++)
+    //     printf("%s: %d\n", names[i], counts[i]);
     for (int i = 0; i < size; i++)
-        printf("%s: %d\n", names[i], counts[i]);
+    {
+        NameCountData data;
+        strncpy(data.name, names[i], sizeof(data.name) - 1);
+        data.name[sizeof(data.name) - 1] = '\0';
+        data.count = counts[i];
+        write_struct_namecount(STDOUT_FILENO, &data);
+    }
     return 0;
 }

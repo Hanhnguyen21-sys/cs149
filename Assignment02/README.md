@@ -1,6 +1,4 @@
-/\*\*
-
-/\*\*
+s/\*\*
 
 - Description: A minimal shell program
 - Author names: Nguyen Nguyen and Duc Nguyen
@@ -46,6 +44,64 @@ You will see the prompt
 Enter commands like:
 %./countnames test/names.txt test/names_long.txt
 
+## Test cases
+
+Test case 1 - Single input file
+Command (inside shell)
+%./countnames test/names2.txt
+
+Expected output files:
+
+- PID.out:
+  Jenn Xu: 2
+  Tom Wu: 1
+- PID. err is empty because there is no empty line in names2.txt
+
+Test case 2 - Two files in parallel
+Command (inside shell)
+%./countnames test/names2.txt test/names.txt
+
+Expected output files:
+
+- PID1.out:
+  Jenn Xu: 2
+  Tom Wu: 1
+- PID1. err is empty because there is no empty line in names2.txt
+
+- PID2.out:
+  Nicky: 1
+  Dave Joe: 2
+  Yuan Cheng Chang: 3
+  John Smith: 1
+- PID2 err:
+  Warning - file test/names.txt line 2 is empty.
+  Warning - file test/names.txt line 5 is empty.
+
+Test case 3 - Many files
+Command (inside shell)
+%./countnames test/names2.txt test/names.txt test/names_long_redundant.txt names1.txt namesB.txt
+
+Expected output files:
+5 .err files and 5 .out files
+
+Test case 4 - Invalid file
+Command (inside shell)
+%./countnames invalid.txt
+
+Expected output files:
+
+- PID.out is empty
+- PID. err:
+  error: cannot open file not_exist.txt
+
+Test case 4 - Empty file
+Command (inside shell)
+%./countnames test/subdir/empty_lines.txt
+
+Expected output files:
+
+- PID.out and PID.err are empty
+
 ## Reflection
 
 From this assignment, we gained a deeper understanding of
@@ -64,7 +120,7 @@ status of a process.
 
 ## References
 
-Slides in classes: Class 5 Slides - Process API, CS149 C Introduction 3
+Slides in classes: Class 5 Slides - Process API, CS149 s
 
 Author
 Duc Nguyen
