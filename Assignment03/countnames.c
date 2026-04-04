@@ -1,10 +1,12 @@
-#include <stdio.h>
+#include <sys/wait.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include "structs.h"
 #define MAX_NAMES 100
-#define MAX_NAME_LEN 31 // 30 chars + '\0'
+#define MAX_NAME_LEN 31
 #define BUF_SIZE 256
 /**
  * This function performs a linear search to find the index of a name in the names array.
@@ -141,7 +143,17 @@ int main(int argc, char *argv[])
     {
         fclose(fptr);
     }
+    /* open .out file AFTER we know there is output */
+    int outfd = -1;
+    char outfile[64];
+    snprintf(outfile, sizeof(outfile), "%d.out", getpid());
 
+    outfd = open(outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (outfd < 0)
+    {
+        perror("open .out file");
+        return 1;
+    }
     // for (int i = 0; i < size; i++)
     //     printf("%s: %d\n", names[i], counts[i]);
     for (int i = 0; i < size; i++)
@@ -151,6 +163,7 @@ int main(int argc, char *argv[])
         data.name[sizeof(data.name) - 1] = '\0';
         data.count = counts[i];
         write_struct_namecount(STDOUT_FILENO, &data);
+        dprintf(outfd, "%s: %d\n", data.name, data.count);
     }
     return 0;
 }

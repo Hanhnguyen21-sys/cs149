@@ -155,15 +155,15 @@ int main(void)
             }
             else if (pid == 0)
             {
-                // each child wrties to the pipe Header and NameCountData
+                // each child writes to the pipe Header and NameCountData
                 // for parent to read
                 close(pipefd[0]); // close read end in child
                 // redirect stdout to pipe
                 dup2(pipefd[1], STDOUT_FILENO);
                 close(pipefd[1]); // close original write end after dup2
-                // char outfile[64];
+                char outfile[64];
                 char errfile[64];
-                // snprintf(outfile, sizeof(outfile), "%d.out", getpid());
+                snprintf(outfile, sizeof(outfile), "%d.out", getpid());
                 snprintf(errfile, sizeof(errfile), "%d.err", getpid());
                 // redirect stdout -> <pid>.out
                 // int fd_out = open(outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
@@ -202,17 +202,26 @@ int main(void)
                 children++;
             }
         }
-
         while (children > 0)
         {
-            if ((pid = waitpid(-1, &status, 0)) < 0)
+            pid = waitpid(-1, &status, 0);
+
+            if (pid < 0)
             {
-                perror("Waitpid error");
+                perror("waitpid");
+                break;
             }
-            else
+
+            if (WIFEXITED(status))
             {
-                children--; // decrement children count for each finished child process
+                int code = WEXITSTATUS(status);
+
+                if (code != 0)
+                {
+                    printf("Invalid file\n");
+                }
             }
+            children--;
         }
         printf("Result:\n");
         int acc_count = 0; // count of unique names
